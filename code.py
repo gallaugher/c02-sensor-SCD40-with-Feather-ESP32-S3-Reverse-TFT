@@ -36,7 +36,8 @@ scd4x.start_periodic_measurement()
 print("Waiting for first measurement....")
 
 # Setup Display
-display = board.DISPLAY # setup local display=
+display = board.DISPLAY # setup local display
+display.rotation = 180 # I installed my board upside down so rotated it 180°
 
 # Setup LED
 led = digitalio.DigitalInOut(board.D13)
