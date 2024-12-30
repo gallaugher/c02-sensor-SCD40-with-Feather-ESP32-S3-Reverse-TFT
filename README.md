@@ -1,7 +1,7 @@
 # c02-sensor-SCD40-with-Feather-ESP32-S3-Reverse-TFT
 c02-sensor-SCD40-with-Feather-ESP32-S3-Reverse-TFT
 
-In progress. Project uses CircuitPython with:
+Project uses CircuitPython with:
 Adafruit SCD-40 - True CO2, Temperature and Humidity Sensor - STEMMA QT / Qwiic
 https://www.adafruit.com/product/5187
 
