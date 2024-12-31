@@ -1,6 +1,8 @@
 # C02 Sensor in CircuitPython
 # Uses an Adafruit SCD40 C02 Sensor & an
 # Adafruit Adafruit ESP32-S2 Reverse TFT Feather with 8MB flash
+# by Prof. John Gallaugher: YouTube.com/@prof-g-makes
+# Threads: @john.gallaugher, BlueSky / Mastodon: @gallaugher
 
 import board, time, digitalio
 import adafruit_scd4x
@@ -15,13 +17,13 @@ VERTICAL_MOVE = 12
 
 # Sensor Constants
 CO2_THRESHOLD = 1000
-UPDATE_INTERVAL = 4
+UPDATE_INTERVAL = 4 # get a reading every 4 secondds
 
 # Color Constants
-COLOR_BLACK = 0x000000
-COLOR_WHITE = 0xFFFFFF
-COLOR_GREEN = 0x00FF00
-COLOR_RED = 0xFF0000
+COLOR_BLACK = (0, 0, 0)
+COLOR_WHITE = (255, 255, 255)
+COLOR_GREEN = (0, 255, 0)
+COLOR_RED = (255, 0, 0)
 
 # Add these constants near the top with your other constants
 LOADING_INTERVAL = 0.05  # How fast the animation updates (in seconds)
@@ -37,6 +39,7 @@ print("Waiting for first measurement....")
 
 # Setup Display
 display = board.DISPLAY # setup local display
+# You likely want this as 0, not 180
 display.rotation = 180 # I installed my board upside down so rotated it 180°
 
 # Setup LED
@@ -65,24 +68,24 @@ main_group = displayio.Group()
 # Create single background with palette
 color_bitmap = displayio.Bitmap(WIDTH, HEIGHT, 1)
 color_palette = displayio.Palette(1)
-color_palette[0] = 0x000000  # Start with black background
+color_palette[0] = COLOR_BLACK  # Start with black background
 bg_tile = displayio.TileGrid(color_bitmap, pixel_shader=color_palette, x=0, y=0)
 
 # Create all label objects once
 co2_label = label.Label(
-    terminalio.FONT, scale=3, color=0xFFFFFF,
+    terminalio.FONT, scale=3, color=COLOR_WHITE,
     x=8, y=5+VERTICAL_MOVE)
 co2_value = label.Label(
-    font, scale=2, color=0xFFFFFF,
+    font, scale=2, color=COLOR_WHITE,
     x=9, y=53+VERTICAL_MOVE)
 temp_label = label.Label(
-    terminalio.FONT, scale=3, color=0xFFFFFF,
+    terminalio.FONT, scale=3, color=COLOR_WHITE,
     x=160, y=43+VERTICAL_MOVE)
 humid_label = label.Label(
-    terminalio.FONT, scale=3, color=0xFFFFFF,
+    terminalio.FONT, scale=3, color=COLOR_WHITE,
     x=160, y=83+VERTICAL_MOVE)
 icon_label = label.Label(
-    icons, scale=1, color=0x00FF00,
+    icons, scale=1, color=COLOR_GREEN,
     x=44, y=102+VERTICAL_MOVE)
 
 # Add all elements to main group
@@ -95,18 +98,7 @@ for label_obj in [co2_label, co2_value,
 # Show the display group
 display.root_group = main_group
 
-# Initialize sensor
-i2c = board.STEMMA_I2C()
-scd4x = adafruit_scd4x.SCD4X(i2c)
-print("Serial number:", [hex(i) for i in scd4x.serial_number])
-scd4x.start_periodic_measurement()
-
-# Different animation styles you can choose from:
-def update_spinner_animation(frame):
-    """Rotating line animation."""
-    co2_label.text = f"Loading {SPINNER_CHARS[frame]}"
-    temp_label.text = f"{SPINNER_CHARS[frame]}"
-    humid_label.text = f"{SPINNER_CHARS[frame]}"
+# Animation Code:
 
 def show_loading_screen():
     """Display loading message while sensor initializes."""
@@ -119,22 +111,28 @@ def show_loading_screen():
 # Show loading screen
 show_loading_screen()
 
+def update_spinner_animation(frame):
+    """Rotating line animation."""
+    co2_label.text = f"Loading {SPINNER_CHARS[frame]}"
+    temp_label.text = f"{SPINNER_CHARS[frame]}"
+    humid_label.text = f"{SPINNER_CHARS[frame]}"
+
 def update_labels(co2, temp, humidity, is_high):
     # Update only the labels that have changed.
     if prev_values["is_high"] != is_high:
 
         # Update background color by changing the palette
-        color_palette[0] = 0xFFFFFF if is_high else 0x000000
-        new_color = 0x000000 if is_high else 0xFFFFFF
+        color_palette[0] = COLOR_WHITE if is_high else COLOR_BLACK
+        new_color = COLOR_BLACK if is_high else COLOR_WHITE
 
         for label_obj in [co2_label, co2_value,
                           temp_label, humid_label]:
             label_obj.color = new_color
 
         # Update icon
-        icon_label.text = "" if not is_high else ""
-        icon_label.color = 0x00FF00 if not is_high else 0xFF0000
-        icon_label.x = 44 if not is_high else 61  # Move 15 pixels right when high
+        icon_label.text = "" if is_high else ""
+        icon_label.color = COLOR_RED if is_high else COLOR_GREEN
+        icon_label.x = 61 if is_high else 44  # Move 15 pixels right when high
         led.value = is_high # LED will turn on when CO2 is high
 
         # Update text only if values have changed
